@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Gazebo Test Stage
+Comment=Launch TurtleBot3 test stage world with ROS Melodic and ROS Bouncy ROS1 bridge
+Exec=/home/user/start-gazebo-testStage.sh
+Terminal=false
+Type=Application
+Categories=Utility;Application;
+Icon=/usr/share/icons/Tango/32x32/mimetypes/gnome-mime-application-x-executable.png
+
