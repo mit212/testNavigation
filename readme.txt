@@ -10,5 +10,5 @@ Once you have downloaded this repo:
 		Run: . ~/catkin_ws/devel/setup.bash
 		Run: source /opt/ros/melodic/setup.bash
 	Start the controller
-		Run: rosrun simple_controller controller.py
+		Run: rosrun simple_controller controller.py 
 
