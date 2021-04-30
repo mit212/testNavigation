@@ -38,85 +38,77 @@ def searchForAprilTags(x,y,theta):
 	# Visibility information
 	tag1Vis=myClass()
 	tag1Vis.label='tag1'
+	# Tag Position Relative to Global (0,0)
+	tag1Vis.x=-3.85
+	tag1Vis.y=-1.79
 	# Robot Position Bounding Box
-	tag1Vis.xMin=-1.9
+	tag1Vis.xMin=tag1Vis.x
 	tag1Vis.xMax=10
 	tag1Vis.yMin=-100
 	tag1Vis.yMax=100
-	# Tag Position Relative to Global (0,0)
-	tag1Vis.x=-1.9
-	tag1Vis.y=0
+
 	
 	# Tag one
 	# Visibility information
 	tag2Vis=myClass()
 	tag2Vis.label='tag2'
+	# Tag Position Relative to Global (0,0)
+	tag2Vis.x=-3.3
+	tag2Vis.y=-7.0
 	# Robot Position Bounding Box
-	tag2Vis.xMin=-3
+	tag2Vis.xMin=-5.5
 	tag2Vis.xMax=10
 	tag2Vis.yMin=-100
 	tag2Vis.yMax=100
-	# Tag Position Relative to Global (0,0)
-	tag2Vis.x=-1.5
-	tag2Vis.y=-2.95
+
 	
 	# Tag one
 	# Visibility information
 	tag3Vis=myClass()
 	tag3Vis.label='tag3'
-	# Robot Position Bounding Box
-	tag3Vis.xMin=-4.25
-	tag3Vis.xMax=-2
-	tag3Vis.yMin=-100
-	tag3Vis.yMax=100
 	# Tag Position Relative to Global (0,0)
-	tag3Vis.x=-4.25
-	tag3Vis.y=-2.5
+	tag3Vis.x=-6.66
+	tag3Vis.y=-6.72
+	# Robot Position Bounding Box
+	tag3Vis.xMin=tag3Vis.x
+	tag3Vis.xMax=0
+	tag3Vis.yMin=tag2Vis.y
+	tag3Vis.yMax=-4.5
+
 	
 	# Tag one
 	# Visibility information
 	tag4Vis=myClass()
 	tag4Vis.label='tag4'
+	# Tag Position Relative to Global (0,0)
+	tag4Vis.x=-6.23
+	tag4Vis.y=-0.19
 	# Robot Position Bounding Box
-	tag4Vis.xMin=-100
-	tag4Vis.xMax=-2.5
+	tag4Vis.xMin=-10
+	tag4Vis.xMax=-5.83
 	tag4Vis.yMin=-100
 	tag4Vis.yMax=100
-	# Tag Position Relative to Global (0,0)
-	tag4Vis.x=-3.4
-	tag4Vis.y=.58
+
 	
 	# Tag one
 	# Visibility information
 	tag5Vis=myClass()
 	tag5Vis.label='tag5'
-	# Robot Position Bounding Box
-	tag5Vis.xMin=-100
-	tag5Vis.xMax=-2.5
-	tag5Vis.yMin=-100
-	tag5Vis.yMax=100
 	# Tag Position Relative to Global (0,0)
-	tag5Vis.x=-6.35
-	tag5Vis.y=-.5
+	tag5Vis.x=-9
+	tag5Vis.y=-4.88
+	# Robot Position Bounding Box
+	tag5Vis.xMin=-10
+	tag5Vis.xMax=-5.83
+	tag5Vis.yMin=-4.88
+	tag5Vis.yMax=0.0
+
 	
-	# Tag one
-	# Visibility information
-	tag6Vis=myClass()
-	tag6Vis.label='tag6'
-	# Robot Position Bounding Box
-	tag6Vis.xMin=-100
-	tag6Vis.xMax=-2.5
-	tag6Vis.yMin=-1
-	tag6Vis.yMax=100
-	# Tag Position Relative to Global (0,0)
-	tag6Vis.x=-5.75
-	tag6Vis.y=-1
-
-
 
 	def computeLineOfSight(tagVis, x, y, theta): #Pass in the class that describes visibility informaiton of each of the April tag. This returns information from each tag that is visible.
 		# Robot's blind spot half-angle (Rad)
-		thetaBlind=.79
+		cameraFOV=1.12
+		thetaBlind=(2*np.pi-cameraFOV)/2
 		
 		# Compute relative angle between the April Tag and the robot (reference notes)
 		V=np.array([tagVis.x-x, tagVis.y-y])
@@ -147,13 +139,26 @@ def searchForAprilTags(x,y,theta):
 	relPos.relPos3=computeLineOfSight(tag3Vis, x, y, theta)
 	relPos.relPos4=computeLineOfSight(tag4Vis, x, y, theta)
 	relPos.relPos5=computeLineOfSight(tag5Vis, x, y, theta)
-	relPos.relPos6=computeLineOfSight(tag6Vis, x, y, theta)
 
 	return relPos
 
 	
+def setSpeeds(xDot, yDot, thetaDot):
+	def clamp(num):
+		return max(min(num,1),-1)
 
+	xDot=clamp(xDot)
+	yDot=clamp(yDot)
+	thetaDot=clamp(thetaDot)
 
+	maxSpeed=1.4 #Maximum Linear Speed m/s
+	maxRot=.5 #Maximum Angular Velocit rad/s
+
+	speed.linear.x = xDot*maxSpeed
+	speed.linear.y = yDot*maxSpeed
+	speed.angular.z = thetaDot*maxRot
+
+	return speed
 
 
 
@@ -167,7 +172,7 @@ speed = Twist()
 r = rospy.Rate(4)
 
 
-# This is a way to specify a location with respect to the environment's origin
+# This is a way to specify a location with respect to the environment's coordinate system
 goal = Point()
 goal.x=-1
 goal.y=-1
@@ -175,22 +180,25 @@ goal.y=-1
 # This is the main loop
 while not rospy.is_shutdown():
 
-	# This is how to set the speed of the mobil robot
-	speed.linear.x = 0.0
-	speed.linear.y = 0.0
-	speed.angular.z = 0.3
+	# This is how to set the speed of the mobile robot. Choose a value between -1 < x < 1 for each speed. 1 Corresponds to the maximum speed.
+	xDot=0
+	yDot=0
+	thetaDot=.75
+	speed=setSpeeds(xDot, yDot, thetaDot)
 
 	# This function searches for April tags based on the global pose of the robot
 	tagInfo = searchForAprilTags(x,y,theta)
 
-	# The relative position of the mobile robot with respect to each April tag that it sees is given by 'tagInfo.relPos#.x/y'
-	print(tagInfo.relPos1.x, tagInfo.relPos1.y)
 
-	# If a tag is visible, this will return 'tag#' otherwise it returns 'no tag'
-	print(tagInfo.relPos1.label)
+	if tagInfo.relPos1.label != 'no tag':
+		# The relative position of the mobile robot with respect to each April tag that it sees is given by 'tagInfo.relPos#.x/y'
+		print('Robot\'s relative position: ',tagInfo.relPos1.x, tagInfo.relPos1.y)
+
+		# If a tag is visible, this will return 'tag#' otherwise it returns 'no tag'
+		print('Tag label = ', tagInfo.relPos1.label)
 
 	# You will also be able to compute the orientation of the mobil robot.
-	print(theta)
+	print('Robot orientation = ', theta)
 
 	# This sends the speed command to the mobile robot
 	pub.publish(speed)
