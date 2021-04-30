@@ -116,7 +116,8 @@ def searchForAprilTags(x,y,theta):
 
 	def computeLineOfSight(tagVis, x, y, theta): #Pass in the class that describes visibility informaiton of each of the April tag. This returns information from each tag that is visible.
 		# Robot's blind spot half-angle (Rad)
-		thetaBlind=1.12
+		cameraFOV=1.12
+		thetaBlind=(2*np.pi-cameraFOV)/2
 		
 		# Compute relative angle between the April Tag and the robot (reference notes)
 		V=np.array([tagVis.x-x, tagVis.y-y])
