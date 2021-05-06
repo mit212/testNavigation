@@ -27,10 +27,12 @@ def newOdom(msg):
 	rot_q=msg.pose.pose.orientation
 	(roll, pitch, theta)=euler_from_quaternion([rot_q.x, rot_q.y, rot_q.z, rot_q.w])
 
+def searchForAprilTags():
+	global x
+	global y
+	global theta
 
 
-def searchForAprilTags(x,y,theta):
-	
 	class myClass(object):
 		pass
 	
@@ -108,26 +110,28 @@ def searchForAprilTags(x,y,theta):
 	def computeLineOfSight(tagVis, x, y, theta): #Pass in the class that describes visibility informaiton of each of the April tag. This returns information from each tag that is visible.
 		# Robot's blind spot half-angle (Rad)
 		cameraFOV=1.12
-		thetaBlind=(2*np.pi-cameraFOV)/2
+		halfFOV=(cameraFOV)/2
 		
 		# Compute relative angle between the April Tag and the robot (reference notes)
-		V=np.array([tagVis.x-x, tagVis.y-y])
+		V=np.array([tagVis.x-x, tagVis.y-y]) #Vector from robot to april tag, wrt global frame
 		xHat=np.array([np.cos(theta),np.sin(theta)])
 		yHat=np.array([-np.sin(theta),np.cos(theta)])
+		vRel=xHat*V[0] + yHat*V[1] #Vector from robot to april tag, wrt robot frame
 		alpha=atan2(np.dot(V,yHat), np.dot(V, xHat))
 
 
 		# Check if the robot is pointed at the tag, and in the proper bounding box to see the tag
-		class relativePositionFromAprilTag(object):
+		class relativePositionOfTagFromRobot(object):
 			pass
 
-		relPos=relativePositionFromAprilTag() 
+		relPos=relativePositionOfTagFromRobot() 
 
 
-		if x>tagVis.xMin and x<tagVis.xMax and y>tagVis.yMin and y<tagVis.yMax and ( alpha > thetaBlind or alpha < -thetaBlind ):
+		if x>tagVis.xMin and x<tagVis.xMax and y>tagVis.yMin and y<tagVis.yMax and ( alpha > -halfFOV and alpha < halfFOV ):
 			relPos.label=tagVis.label
-			relPos.x=-V[0]
-			relPos.y=-V[1]
+			# Position of the tag wrt a coordinate system fixed to the robot (ie it's camera's frame)
+			relPos.x=vRel[0]
+			relPos.y=vRel[1]
 		else:
 			relPos.label='no tag'
 		return relPos
@@ -140,8 +144,7 @@ def searchForAprilTags(x,y,theta):
 	relPos.relPos4=computeLineOfSight(tag4Vis, x, y, theta)
 	relPos.relPos5=computeLineOfSight(tag5Vis, x, y, theta)
 
-	return relPos
-
+	return relPos #Search for April Tags using the global pose of the robot
 	
 def setSpeeds(xDot, yDot, thetaDot):
 	def clamp(num):
@@ -160,6 +163,167 @@ def setSpeeds(xDot, yDot, thetaDot):
 
 	return speed
 
+def searchForTag(tagID): #Search for the specified tag
+	class myClass(object):
+			pass
+	locatedTag = myClass()
+
+	# Search
+	tagInfo = searchForAprilTags() #What are all the tags that we see
+	if tagID == tagInfo.relPos1.label:
+		# Stop motion
+		
+		print('found ', tagID)
+		xDot=0
+		yDot=0
+		thetaDot=0
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		locatedTag.relX = tagInfo.relPos1.x
+		locatedTag.relY = tagInfo.relPos1.y
+		locatedTag.found = True
+		#return locatedTag
+	elif tagID == tagInfo.relPos2.label:
+		# Stop motion
+		
+		print('found ', tagID)
+		xDot=0
+		yDot=0
+		thetaDot=0
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		locatedTag.relX = tagInfo.relPos2.x
+		locatedTag.relY = tagInfo.relPos2.y
+		locatedTag.found = True
+		#return locatedTag	
+	elif tagID == tagInfo.relPos3.label:
+		# Stop motion
+		
+		print('found ', tagID)
+		xDot=0
+		yDot=0
+		thetaDot=0
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		locatedTag.relX = tagInfo.relPos3.x
+		locatedTag.relY = tagInfo.relPos3.y
+		locatedTag.found = True
+		#return locatedTag
+	elif tagID == tagInfo.relPos4.label:
+		# Stop motion
+		
+		print('found ', tagID)
+		xDot=0
+		yDot=0
+		thetaDot=0
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		locatedTag.relX = tagInfo.relPos4.x
+		locatedTag.relY = tagInfo.relPos4.y
+		locatedTag.found = True
+		#return locatedTag
+	elif tagID == tagInfo.relPos5.label:
+		# Stop motion
+		
+		print('found ', tagID)
+		xDot=0
+		yDot=0
+		thetaDot=0
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		locatedTag.relX = tagInfo.relPos5.x
+		locatedTag.relY = tagInfo.relPos5.y
+		locatedTag.found = True
+		#return locatedTag
+	else:
+		# Spin in place
+		xDot=0
+		yDot=0
+		thetaDot=.75
+		speed=setSpeeds(xDot, yDot, thetaDot)
+		print('Tag not found')
+		locatedTag.found = False
+		#return locatedTag
+
+	pub.publish(speed)
+	r.sleep()
+	return locatedTag
+
+def viewedTagRelPos(tagID): #Relative position of the tag that we are watching
+	class myClass(object):
+			pass
+	locatedTag = myClass()
+
+	# Search
+	tagInfo = searchForAprilTags() #What are all the tags that we see
+	if tagID == tagInfo.relPos1.label:
+		locatedTag.relX = tagInfo.relPos1.x
+		locatedTag.relY = tagInfo.relPos1.y
+	elif tagID == tagInfo.relPos2.label:
+		locatedTag.relX = tagInfo.relPos2.x
+		locatedTag.relY = tagInfo.relPos2.y
+	elif tagID == tagInfo.relPos3.label:
+		locatedTag.relX = tagInfo.relPos3.x
+		locatedTag.relY = tagInfo.relPos3.y
+	elif tagID == tagInfo.relPos4.label:
+		locatedTag.relX = tagInfo.relPos4.x
+		locatedTag.relY = tagInfo.relPos4.y
+	elif tagID == tagInfo.relPos5.label:
+		locatedTag.relX = tagInfo.relPos5.x
+		locatedTag.relY = tagInfo.relPos5.y
+	else:
+		pass
+
+	return locatedTag
+
+def approach(viewedTag):
+	# We will know the orientation of each tag in the map, so we can turn to be pointing at it directly
+	def pointAtTag(viewedTag):
+		global theta
+
+		yRel = viewedTag.relY
+		print('yRel = ', yRel)
+
+		if yRel > 0.02:
+			# Turn counter-clockwise
+			print('Spin CCW')
+			thetaDot=.25
+			speed=setSpeeds(0, thetaDot, 0)
+			viewedTag.pointed = False
+
+		elif yRel < -0.02:
+			# Turn clockwise
+			print('Spin CW')
+			thetaDot=-.25
+			speed=setSpeeds(0, thetaDot, 0)
+			viewedTag.pointed = False
+
+		else:
+			speed=setSpeeds(0, 0, 0)
+			viewedTag.pointed = True
+			print('Pointing at tag', 'Theta Global = ', theta)
+
+		pub.publish(speed)
+		r.sleep()
+
+		return viewedTag
+
+	# def straf(viewedTag):
+	# 	global theta
+	# 	global y
+
+	# 	if y > -1.79:
+	# 		speed=setSpeeds(0, -.25, 0)
+	# 	else:
+	# 		speed=setSpeeds(0, 0, 0)
+
+
+
+	viewedTag=pointAtTag(viewedTag)
+
+	return viewedTag
+
+
+
+
+
+
+
 
 
 rospy.init_node("speed_controller")
@@ -169,39 +333,49 @@ pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
 speed = Twist()
 
-r = rospy.Rate(4)
+r = rospy.Rate(100)
 
 
-# This is a way to specify a location with respect to the environment's coordinate system
-goal = Point()
-goal.x=-1
-goal.y=-1
+# keep track of what has been done
+found1 = 0
+approach1 = 0
 
 # This is the main loop
 while not rospy.is_shutdown():
+	while found1 == False:
+		locatedTag = searchForTag('tag1')
+		found1 = locatedTag.found
+		print('found1 = ', found1)
 
-	# This is how to set the speed of the mobile robot. Choose a value between -1 < x < 1 for each speed. 1 Corresponds to the maximum speed.
-	xDot=0
-	yDot=0
-	thetaDot=.75
-	speed=setSpeeds(xDot, yDot, thetaDot)
-
-	# This function searches for April tags based on the global pose of the robot
-	tagInfo = searchForAprilTags(x,y,theta)
+	while found1 == True and approach1 == False:
+		viewedTag = viewedTagRelPos('tag1')
+		viewedTag = approach(viewedTag)
+		approach1 = viewedTag.pointed
+		print('approach1 = ', approach1)
 
 
-	if tagInfo.relPos1.label != 'no tag':
-		# The relative position of the mobile robot with respect to each April tag that it sees is given by 'tagInfo.relPos#.x/y'
-		print('Robot\'s relative position: ',tagInfo.relPos1.x, tagInfo.relPos1.y)
+	# # This is how to set the speed of the mobile robot. Choose a value between -1 < x < 1 for each speed. 1 Corresponds to the maximum speed.
+	# xDot=0
+	# yDot=0
+	# thetaDot=.75
+	# speed=setSpeeds(xDot, yDot, thetaDot)
 
-		# If a tag is visible, this will return 'tag#' otherwise it returns 'no tag'
-		print('Tag label = ', tagInfo.relPos1.label)
+	# # This function searches for April tags based on the global pose of the robot
+	# tagInfo = searchForAprilTags()
 
-	# You will also be able to compute the orientation of the mobil robot.
-	print('Robot orientation = ', theta)
 
-	# This sends the speed command to the mobile robot
-	pub.publish(speed)
+	# if tagInfo.relPos1.label != 'no tag':
+	# 	# The relative position of the mobile robot with respect to each April tag that it sees is given by 'tagInfo.relPos#.x/y'
+	# 	print('Robot\'s relative position: ',tagInfo.relPos1.x, tagInfo.relPos1.y)
 
-	# This sets the loop rate
-	r.sleep()
+	# 	# If a tag is visible, this will return 'tag#' otherwise it returns 'no tag'
+	# 	print('Tag label = ', tagInfo.relPos1.label)
+
+	# # You will also be able to compute the orientation of the mobil robot.
+	# print('Robot orientation = ', theta)
+
+	# # This sends the speed command to the mobile robot
+	# pub.publish(speed)
+
+	# # This sets the loop rate
+	# r.sleep()
