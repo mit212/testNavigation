@@ -108,12 +108,13 @@ def searchForAprilTags(x,y,theta):
 	def computeLineOfSight(tagVis, x, y, theta): #Pass in the class that describes visibility informaiton of each of the April tag. This returns information from each tag that is visible.
 		# Robot's blind spot half-angle (Rad)
 		cameraFOV=1.12
-		thetaBlind=(2*np.pi-cameraFOV)/2
+		halfFOV=(cameraFOV)/2
 		
 		# Compute relative angle between the April Tag and the robot (reference notes)
-		V=np.array([tagVis.x-x, tagVis.y-y])
+		V=np.array([tagVis.x-x, tagVis.y-y]) #Vector from robot to april tag, wrt global frame
 		xHat=np.array([np.cos(theta),np.sin(theta)])
 		yHat=np.array([-np.sin(theta),np.cos(theta)])
+		vRel=xHat*V[0] + yHat*V[1] #Vector from robot to april tag, wrt robot frame
 		alpha=atan2(np.dot(V,yHat), np.dot(V, xHat))
 
 
@@ -124,10 +125,10 @@ def searchForAprilTags(x,y,theta):
 		relPos=relativePositionFromAprilTag() 
 
 
-		if x>tagVis.xMin and x<tagVis.xMax and y>tagVis.yMin and y<tagVis.yMax and ( alpha > thetaBlind or alpha < -thetaBlind ):
+		if x>tagVis.xMin and x<tagVis.xMax and y>tagVis.yMin and y<tagVis.yMax and ( alpha > -halfFOV and alpha < halfFOV ):
 			relPos.label=tagVis.label
-			relPos.x=-V[0]
-			relPos.y=-V[1]
+			relPos.x=vRel[0]
+			relPos.y=vRel[1]
 		else:
 			relPos.label='no tag'
 		return relPos
